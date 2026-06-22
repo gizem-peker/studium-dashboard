@@ -1,0 +1,32 @@
+from modul import Modul
+
+
+class Semester:
+    """Repräsentiert ein Semester mit mehreren Modulen.
+
+    Beziehung zu Modul: Komposition. Die Module werden im Semester
+    verwaltet und existieren nicht unabhängig davon.
+    """
+
+    def __init__(self, nummer: int, ects_ziel: int = 30):
+        self.__nummer = nummer
+        self.__ects_ziel = ects_ziel
+        self.__module = []
+
+    def get_nummer(self) -> int:
+        return self.__nummer
+
+    def modul_hinzufuegen(self, modul: Modul) -> None:
+        self.__module.append(modul)
+
+    def get_module(self) -> list:
+        return self.__module
+
+    def get_ects_absolviert(self) -> int:
+        return sum(m.get_ects() for m in self.__module if m.get_status() == "bestanden")
+
+    def is_abgeschlossen(self) -> bool:
+        return self.get_ects_absolviert() >= self.__ects_ziel
+
+    def __str__(self) -> str:
+        return f"Semester {self.__nummer}: {self.get_ects_absolviert()}/{self.__ects_ziel} ECTS"
