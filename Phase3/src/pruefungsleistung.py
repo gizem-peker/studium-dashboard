@@ -1,53 +1,40 @@
-from abc import ABC, abstractmethod
+from enum import Enum
 
 
-class Pruefungsleistung(ABC):
-    """Abstrakte Basisklasse für alle Prüfungsleistungen.
+class Pruefungsart(Enum):
+    """Mögliche Arten einer Prüfungsleistung (Enumeration)."""
 
-    Es wird bewusst keine direkte Instanz dieser Klasse erzeugt,
-    da es in der Realität keine 'allgemeine' Prüfung gibt -
-    jede Prüfung ist konkret entweder eine Klausur oder eine Projektarbeit.
+    KLAUSUR = "Klausur"
+    PROJEKTARBEIT = "Projektarbeit"
+
+
+class Pruefungsleistung:
+    """Prüfungsleistung eines Moduls.
+
+    Beziehung zu Modul: Komposition. Die Prüfungsleistung wird im Modul
+    selbst erzeugt und existiert nicht unabhängig davon.
+
+    Eine Note ist nicht immer sofort vorhanden: note = None bedeutet,
+    dass die Prüfung noch nicht bewertet wurde.
     """
 
-    def __init__(self, note: float):
-        self.__note = note
+    BESTEHENSGRENZE = 4.0  # Noten bis einschließlich 4,0 gelten als bestanden
 
-    def get_note(self) -> float:
+    def __init__(self, pruefungsart: Pruefungsart, note: float | None = None,
+                 datum: str | None = None):
+        self.__pruefungsart = pruefungsart
+        self.__note = note
+        self.__datum = datum  # Format JJJJ-MM-TT, z. B. "2026-05-10"
+
+    def get_pruefungsart(self) -> Pruefungsart:
+        return self.__pruefungsart
+
+    def get_note(self) -> float | None:
         return self.__note
 
-    @abstractmethod
-    def berechne_ergebnis(self) -> bool:
-        """Muss von jeder Unterklasse implementiert werden."""
-        pass
+    def get_datum(self) -> str | None:
+        return self.__datum
 
-    def __str__(self) -> str:
-        status = "bestanden" if self.berechne_ergebnis() else "nicht bestanden"
-        return f"Note: {self.__note} ({status})"
-
-
-class Klausur(Pruefungsleistung):
-    """Konkrete Prüfungsleistung: Klausur, optional mit Prüfungsdatum."""
-
-    def __init__(self, note: float, pruefungsdatum: str = None):
-        super().__init__(note)
-        self.__pruefungsdatum = pruefungsdatum
-
-    def get_pruefungsdatum(self) -> str | None:
-        return self.__pruefungsdatum
-
-    def berechne_ergebnis(self) -> bool:
-        return self.get_note() <= 4.0
-
-
-class Projektarbeit(Pruefungsleistung):
-    """Konkrete Prüfungsleistung: Projektarbeit, optional mit Abgabedatum."""
-
-    def __init__(self, note: float, abgabedatum: str = None):
-        super().__init__(note)
-        self.__abgabedatum = abgabedatum
-
-    def get_abgabedatum(self) -> str | None:
-        return self.__abgabedatum
-
-    def berechne_ergebnis(self) -> bool:
-        return self.get_note() <= 4.0
+    def ist_bestanden(self) -> bool:
+        """True, wenn eine Note vorliegt und diese 4,0 oder besser ist."""
+        return self.__note is not None and self.__note <= self.BESTEHENSGRENZE

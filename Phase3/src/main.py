@@ -6,4 +6,5 @@ studiengang = dm.lade_daten()
 
 ui = DashboardUI(studiengang)
 ui.zeige_fortschritt()
+ui.zeige_suche()
 ui.starten()

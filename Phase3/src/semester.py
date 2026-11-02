@@ -1,8 +1,8 @@
-from modul import Modul
+from modul import Modul, ModulStatus
 
 
 class Semester:
-    """Repräsentiert ein Semester mit mehreren Modulen.
+    """Ein Semester mit mehreren Modulen.
 
     Beziehung zu Modul: Komposition. Die Module werden im Semester
     verwaltet und existieren nicht unabhängig davon.
@@ -23,7 +23,9 @@ class Semester:
         return self.__module
 
     def get_ects_absolviert(self) -> int:
-        return sum(m.get_ects() for m in self.__module if m.get_status() == "bestanden")
+        """Summiert die ECTS aller bestandenen Module."""
+        return sum(m.get_ects() for m in self.__module
+                   if m.get_status() == ModulStatus.BESTANDEN)
 
     def is_abgeschlossen(self) -> bool:
         return self.get_ects_absolviert() >= self.__ects_ziel
