@@ -17,6 +17,8 @@ class Modul:
     leistung wird hier im Konstruktor erzeugt und gehört fest zum Modul.
     """
 
+    STANDARD_ECTS = 5  # Ein Modul hat im Studium in der Regel 5 ECTS
+
     def __init__(self, name: str, pruefungsart: Pruefungsart, ects: int = 5,
                  note: float | None = None, datum: str | None = None):
         self.__name = name

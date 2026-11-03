@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from modul import Modul
 from pruefungsleistung import Pruefungsart
 from semester import Semester
@@ -6,7 +7,7 @@ from studiengang import Studiengang
 
 
 class DatenManager:
-    """Speichert und lädt einen Studiengang in/aus einer JSON-Datei.
+    """Lädt einen Studiengang aus einer JSON-Datei.
 
     Beziehung zu Studiengang: Abhängigkeit. Der DatenManager arbeitet
     mit einem Studiengang-Objekt, besitzt es aber nicht.
@@ -15,38 +16,12 @@ class DatenManager:
     def __init__(self, dateipfad: str):
         self.__dateipfad = dateipfad
 
-    def speichere_daten(self, studiengang: Studiengang) -> None:
-        """Wandelt den Studiengang in ein Dictionary um und speichert es als JSON."""
-        daten = {
-            "name": studiengang.get_name(),
-            "semester": []
-        }
-
-        for semester in studiengang.get_semester():
-            semester_daten = {
-                "nummer": semester.get_nummer(),
-                "module": []
-            }
-            for modul in semester.get_module():
-                modul_daten = {
-                    "name": modul.get_name(),
-                    "ects": modul.get_ects(),
-                    "pruefungsart": modul.get_pruefungsart().name,
-                    "note": modul.get_note(),
-                    "datum": modul.get_datum()
-                }
-                semester_daten["module"].append(modul_daten)
-            daten["semester"].append(semester_daten)
-
-        with open(self.__dateipfad, "w", encoding="utf-8") as datei:
-            json.dump(daten, datei, indent=2, ensure_ascii=False)
-
     def lade_daten(self) -> Studiengang:
         """Liest die JSON-Datei und baut daraus die Objektstruktur auf."""
         with open(self.__dateipfad, "r", encoding="utf-8") as datei:
             daten = json.load(datei)
 
-        studiengang = Studiengang(daten["name"])
+        studiengang = Studiengang(daten["name"], self.__lese_beginn(daten))
 
         for semester_daten in daten["semester"]:
             semester = Semester(semester_daten["nummer"])
@@ -75,4 +50,14 @@ class DatenManager:
             raise ValueError(
                 f"Ungültige Prüfungsart bei Modul '{modul_daten.get('name')}'. "
                 f"Erlaubt sind: KLAUSUR oder PROJEKTARBEIT."
+            )
+
+    def __lese_beginn(self, daten: dict) -> date:
+        """Liest den Studienbeginn (Format JJJJ-MM-TT) aus der JSON-Datei."""
+        try:
+            return date.fromisoformat(daten["beginn"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError(
+                'Ungültiger oder fehlender Studienbeginn. Erwartet wird ein Eintrag '
+                'wie "beginn": "2026-03-01" (Format JJJJ-MM-TT).'
             )

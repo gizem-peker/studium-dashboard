@@ -22,6 +22,17 @@ class Semester:
     def get_module(self) -> list:
         return self.__module
 
+    def get_ects_ziel(self) -> int:
+        return self.__ects_ziel
+
+    def get_geplante_module(self) -> int:
+        """Anzahl der Module, die im Semester geplant sind (ECTS-Ziel / ECTS pro Modul)."""
+        return self.__ects_ziel // Modul.STANDARD_ECTS
+
+    def get_bestandene_module(self) -> int:
+        """Anzahl der bereits bestandenen Module im Semester (Ziel 3)."""
+        return sum(1 for m in self.__module if m.get_status() == ModulStatus.BESTANDEN)
+
     def get_ects_absolviert(self) -> int:
         """Summiert die ECTS aller bestandenen Module."""
         return sum(m.get_ects() for m in self.__module

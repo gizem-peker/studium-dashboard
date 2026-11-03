@@ -1,4 +1,5 @@
-from modul import ModulStatus
+from datetime import date
+from modul import Modul, ModulStatus
 from semester import Semester
 
 
@@ -9,16 +10,25 @@ class Studiengang:
     Studiengang verwaltet und existieren nicht unabhängig davon.
     """
 
-    def __init__(self, name: str, gesamt_ects: int = 180):
+    def __init__(self, name: str, beginn: date, gesamt_ects: int = 180,
+                 zielnote: float = 2.0):
         self.__name = name
+        self.__beginn = beginn
         self.__gesamt_ects = gesamt_ects
+        self.__zielnote = zielnote
         self.__semester = []
 
     def get_name(self) -> str:
         return self.__name
 
+    def get_beginn(self) -> date:
+        return self.__beginn
+
     def get_gesamt_ects(self) -> int:
         return self.__gesamt_ects
+
+    def get_zielnote(self) -> float:
+        return self.__zielnote
 
     def semester_hinzufuegen(self, semester: Semester) -> None:
         self.__semester.append(semester)
@@ -32,6 +42,26 @@ class Studiengang:
     def get_fortschritt(self) -> float:
         """Prozentualer ECTS-Fortschritt (Ziel 1: Zeitplan)."""
         return round(self.get_ects_gesamt_absolviert() / self.__gesamt_ects * 100, 1)
+
+    def get_soll_ects(self, stichtag: date | None = None) -> int:
+        """ECTS, die laut Plan bis zum Stichtag erreicht sein sollen (Ziel 1).
+
+        Plan: ein Modul pro Monat. Gezählt werden die Kalendermonate seit dem
+        Beginnmonat. Ohne Angabe gilt das heutige Datum.
+        """
+        stichtag = stichtag or date.today()
+        monate = (stichtag.year - self.__beginn.year) * 12 + stichtag.month - self.__beginn.month
+        monate = max(0, monate)
+        return min(monate * Modul.STANDARD_ECTS, self.__gesamt_ects)
+
+    def ist_im_zeitplan(self, stichtag: date | None = None) -> bool:
+        """True, wenn mindestens so viele ECTS erreicht sind wie geplant (Ziel 1)."""
+        return self.get_ects_gesamt_absolviert() >= self.get_soll_ects(stichtag)
+
+    def get_geplanten_abschluss(self) -> date:
+        """Geplanter Abschluss: Beginn plus 6 Monate pro Semester (Ziel 1)."""
+        monate_gesamt = self.__beginn.month - 1 + len(self.__semester) * 6
+        return date(self.__beginn.year + monate_gesamt // 12, monate_gesamt % 12 + 1, 1)
 
     def get_notenschnitt(self) -> float:
         """Notendurchschnitt über alle bestandenen Module (Ziel 2).

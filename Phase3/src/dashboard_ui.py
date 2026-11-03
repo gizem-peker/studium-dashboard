@@ -14,9 +14,17 @@ class DashboardUI:
         self.__studiengang = studiengang
         self.__fenster = tk.Tk()
         self.__fenster.title("Mein Studiums-Dashboard")
-        self.__fenster.geometry("460x560")
+        self.__fenster.geometry("460x660")
         self.__suchfeld = None
         self.__ergebnis_label = None
+
+    MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+              "August", "September", "Oktober", "November", "Dezember"]
+
+    @staticmethod
+    def __zahl(wert: float) -> str:
+        """Zahl mit deutschem Dezimalkomma (1.75 -> 1,75)."""
+        return str(wert).replace(".", ",")
 
     def zeige_fortschritt(self) -> None:
         """Zeigt die drei Kennzahlen (Ziele) mit Fortschrittsbalken an."""
@@ -35,16 +43,34 @@ class DashboardUI:
         tk.Label(self.__fenster, text=f"{fortschritt}% ({ects_absolviert}/{ects_gesamt} ECTS)",
                  font=("Arial", 10)).pack(anchor="e", padx=30)
 
+        # Zeitplan: Soll-Ist-Vergleich und geplanter Abschluss
+        soll_ects = self.__studiengang.get_soll_ects()
+        if self.__studiengang.ist_im_zeitplan():
+            zeitplan_text = f"Im Zeitplan (Soll bis heute: {soll_ects} ECTS)"
+            zeitplan_farbe = "#2e7d32"
+        else:
+            fehlend = soll_ects - ects_absolviert
+            zeitplan_text = f"Verzögerung: {fehlend} ECTS hinter dem Plan (Soll bis heute: {soll_ects} ECTS)"
+            zeitplan_farbe = "#c62828"
+        tk.Label(self.__fenster, text=zeitplan_text, font=("Arial", 10, "bold"),
+                 fg=zeitplan_farbe, justify="left", wraplength=400).pack(anchor="w", padx=30, pady=(4, 0))
+        abschluss = self.__studiengang.get_geplanten_abschluss()
+        tk.Label(self.__fenster,
+                 text=f"Geplanter Abschluss: {self.MONATE[abschluss.month - 1]} {abschluss.year}",
+                 font=("Arial", 10)).pack(anchor="w", padx=30)
+
         # --- Ziel 2: Notendurchschnitt ---
         notenschnitt = self.__studiengang.get_notenschnitt()
         if notenschnitt > 0:
             # Skala: 1,0 = voller Balken, 4,0 = leerer Balken
             noten_prozent = max(0, min(100, (4.0 - notenschnitt) / 3.0 * 100))
-            noten_text = f"{notenschnitt}"
+            noten_text = self.__zahl(notenschnitt)
         else:
             noten_prozent = 0
             noten_text = "noch keine Note"
-        tk.Label(self.__fenster, text="Notendurchschnitt", font=("Arial", 11)).pack(anchor="w", padx=30, pady=(12, 0))
+        zielnote = self.__zahl(self.__studiengang.get_zielnote())
+        tk.Label(self.__fenster, text=f"Notendurchschnitt (Ziel: ≤ {zielnote})",
+                 font=("Arial", 11)).pack(anchor="w", padx=30, pady=(12, 0))
         ttk.Progressbar(self.__fenster, length=400, maximum=100, value=noten_prozent).pack(padx=30, pady=(2, 2))
         tk.Label(self.__fenster, text=noten_text, font=("Arial", 10)).pack(anchor="e", padx=30)
 
@@ -57,6 +83,18 @@ class DashboardUI:
             semester_text = "Studium abgeschlossen!"
         tk.Label(self.__fenster, text="Aktuelles Semester", font=("Arial", 11)).pack(anchor="w", padx=30, pady=(12, 0))
         tk.Label(self.__fenster, text=semester_text, font=("Arial", 13, "bold")).pack(anchor="w", padx=30)
+
+        if aktuelles_semester:
+            bestanden = aktuelles_semester.get_bestandene_module()
+            geplant = aktuelles_semester.get_geplante_module()
+            modul_prozent = bestanden / geplant * 100 if geplant else 0
+            ects_semester = aktuelles_semester.get_ects_absolviert()
+            ects_ziel = aktuelles_semester.get_ects_ziel()
+            ttk.Progressbar(self.__fenster, length=400, maximum=100,
+                            value=modul_prozent).pack(padx=30, pady=(4, 2))
+            tk.Label(self.__fenster,
+                     text=f"{bestanden} von {geplant} Modulen bestanden ({ects_semester}/{ects_ziel} ECTS)",
+                     font=("Arial", 10)).pack(anchor="e", padx=30)
 
     def zeige_suche(self) -> None:
         """Baut den Suchbereich auf: Eingabefeld, Button und Ergebnisanzeige."""
@@ -96,7 +134,7 @@ class DashboardUI:
     def __formatiere_modul(self, modul) -> str:
         """Erzeugt den Anzeigetext mit Status, Note und Datum eines Moduls."""
         note = modul.get_note()
-        note_text = f"{note}" if note is not None else "noch keine Note"
+        note_text = self.__zahl(note) if note is not None else "noch keine Note"
         datum_text = modul.get_datum() or "kein Datum"
         return (f"{modul.get_name()} ({modul.get_ects()} ECTS)\n"
                 f"Status: {modul.get_status().value}\n"
