@@ -1,10 +1,7 @@
-from daten_manager import DatenManager
-from dashboard_ui import DashboardUI
+import os
+from application import Application
 
-dm = DatenManager("meine_daten.json")
-studiengang = dm.lade_daten()
+# Die Datendatei liegt neben dieser Datei, egal von wo das Programm gestartet wird.
+dateipfad = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meine_daten.json")
 
-ui = DashboardUI(studiengang)
-ui.zeige_fortschritt()
-ui.zeige_suche()
-ui.starten()
+Application(dateipfad).starten()

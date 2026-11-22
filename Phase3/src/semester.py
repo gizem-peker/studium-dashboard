@@ -9,37 +9,39 @@ class Semester:
     """
 
     def __init__(self, nummer: int, ects_ziel: int = 30):
-        self.__nummer = nummer
-        self.__ects_ziel = ects_ziel
-        self.__module = []
+        self._nummer = nummer
+        self._ects_ziel = ects_ziel
+        self._module = []
 
-    def get_nummer(self) -> int:
-        return self.__nummer
+    @property
+    def nummer(self) -> int:
+        return self._nummer
+
+    @property
+    def ects_ziel(self) -> int:
+        return self._ects_ziel
+
+    @property
+    def module(self) -> list:
+        """Kopie der Modulliste (so kann von außen nichts hinzugefügt werden)."""
+        return list(self._module)
 
     def modul_hinzufuegen(self, modul: Modul) -> None:
-        self.__module.append(modul)
+        self._module.append(modul)
 
-    def get_module(self) -> list:
-        return self.__module
-
-    def get_ects_ziel(self) -> int:
-        return self.__ects_ziel
-
-    def get_geplante_module(self) -> int:
-        """Anzahl der Module, die im Semester geplant sind (ECTS-Ziel / ECTS pro Modul)."""
-        return self.__ects_ziel // Modul.STANDARD_ECTS
-
-    def get_bestandene_module(self) -> int:
-        """Anzahl der bereits bestandenen Module im Semester (Ziel 3)."""
-        return sum(1 for m in self.__module if m.get_status() == ModulStatus.BESTANDEN)
-
-    def get_ects_absolviert(self) -> int:
+    def summiere_ects(self) -> int:
         """Summiert die ECTS aller bestandenen Module."""
-        return sum(m.get_ects() for m in self.__module
-                   if m.get_status() == ModulStatus.BESTANDEN)
+        return sum(m.ects for m in self._module
+                   if m.ermittle_status() == ModulStatus.BESTANDEN)
 
-    def is_abgeschlossen(self) -> bool:
-        return self.get_ects_absolviert() >= self.__ects_ziel
+    def zaehle_bestandene_module(self) -> int:
+        """Anzahl der bereits bestandenen Module im Semester (Ziel 3)."""
+        return sum(1 for m in self._module
+                   if m.ermittle_status() == ModulStatus.BESTANDEN)
 
-    def __str__(self) -> str:
-        return f"Semester {self.__nummer}: {self.get_ects_absolviert()}/{self.__ects_ziel} ECTS"
+    def berechne_geplante_module(self) -> int:
+        """Anzahl der geplanten Module (ECTS-Ziel / ECTS pro Modul)."""
+        return self._ects_ziel // Modul.STANDARD_ECTS
+
+    def ist_abgeschlossen(self) -> bool:
+        return self.summiere_ects() >= self._ects_ziel
